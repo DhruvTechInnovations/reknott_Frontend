@@ -37,3 +37,4 @@ async function findPhoto(rawId: string): Promise<StoredPhoto | null> {
   if (!Number.isInteger(id) || id < 1) return null;
   return getDemoDatabase().prepare("SELECT id, user_id AS userId, storage_key AS storageKey FROM demo_photos WHERE id = ?").bind(id).first<StoredPhoto>();
 }
+

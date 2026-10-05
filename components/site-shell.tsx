@@ -24,7 +24,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
     async function checkSession() {
       try {
         const response = await fetch("/api/demo/session", { cache: "no-store" });
-        if (active) setMemberAuthenticated(response.ok);
+        if (response.ok) {
+          const data = await response.json().catch(() => ({ authenticated: false }));
+          if (active) setMemberAuthenticated(Boolean(data.authenticated));
+        } else {
+          if (active) setMemberAuthenticated(false);
+        }
       } catch {
         if (active) setMemberAuthenticated(false);
       } finally {
