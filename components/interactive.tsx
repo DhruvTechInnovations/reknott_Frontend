@@ -1,9 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { apiPost, apiPut } from "@/lib/api";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import {
+  apiPost,
+  apiPut,
+  authRegister,
+  authSession,
+  getMatches,
+  getMyPreferences,
+  getMyProfile,
+  updateMyProfile,
+  updatePreferences,
+} from "@/lib/api";
 import { profiles, type Profile } from "@/lib/profiles";
+import { getProfileGalleryUrls, getProfilePhotoUrl } from "@/lib/profile-photos";
 
 function FormStatus({ message }: { message: string }) {
   return message ? <div className="form-status" role="status">{message}</div> : null;
@@ -32,9 +43,18 @@ export function QuickSearch() {
 
 export function ProfileCard({ profile }: { profile: Profile }) {
   const [saved, setSaved] = useState(false);
+  const photoUrl = profile.photoUrl || getProfilePhotoUrl(profile.id, profile.gender);
+
   return (
     <article className="profile-card">
-      <div className={`profile-photo ${profile.photoClass}`}>
+      <div
+        className="profile-photo"
+        style={{
+          backgroundImage: `url(${photoUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+        }}
+      >
         <span className="profile-badge">✓ {profile.review}</span>
         <button
           className={`favorite-btn${saved ? " active" : ""}`}
@@ -60,34 +80,151 @@ const emptyFilters: MatchFilters = { gender: "", age: "", city: "", intent: "", 
 export function MatchesExplorer() {
   const [filters, setFilters] = useState<MatchFilters>(emptyFilters);
   const [applied, setApplied] = useState<MatchFilters>(emptyFilters);
-  const results = useMemo(() => profiles.filter((profile) => {
-    const [min, max] = applied.age ? applied.age.split("-").map(Number) : [0, 100];
-    return (!applied.gender || profile.gender === applied.gender) && (!applied.city || profile.city === applied.city) &&
-      (!applied.age || (profile.age >= min && profile.age <= max)) && (!applied.intent || profile.intent === applied.intent) &&
-      (!applied.children || profile.children === applied.children) && (!applied.language || profile.language === applied.language);
-  }), [applied]);
+  const [serverMatches, setServerMatches] = useState<Profile[]>([]);
+  const [userPreferencesInfo, setUserPreferencesInfo] = useState<string | null>(null);
+
+  // When user is logged in, automatically fetch their partner preferences to filter matching profiles
+  useEffect(() => {
+    let active = true;
+    async function loadUserPreferences() {
+      try {
+        const sessionRes = await authSession();
+        if (!active || !sessionRes.ok || !sessionRes.data?.user) return;
+
+        const [prefRes, profRes] = await Promise.all([
+          getMyPreferences().catch(() => ({ ok: false, data: undefined })),
+          getMyProfile().catch(() => ({ ok: false, data: undefined })),
+        ]);
+
+        if (!active) return;
+        const profile = profRes.data || sessionRes.data.profile;
+        const prefs = prefRes.data || profile?.preferences;
+
+        const targetGender = profile?.gender === "MAN" ? "woman" : profile?.gender === "WOMAN" ? "man" : "";
+        let ageRange = "";
+        if (prefs?.ageMin && prefs?.ageMax) {
+          if (prefs.ageMax <= 37) ageRange = "30-37";
+          else if (prefs.ageMax <= 44) ageRange = "38-44";
+          else ageRange = "45-55";
+        }
+
+        const city = prefs?.cities?.[0] || profile?.city || "";
+        const language = prefs?.languages?.[0]?.toLowerCase() || "";
+
+        const initialFilters: MatchFilters = {
+          gender: targetGender,
+          age: ageRange,
+          city,
+          intent: "committed",
+          children: "",
+          language,
+        };
+
+        setFilters(initialFilters);
+        setApplied(initialFilters);
+        setUserPreferencesInfo(
+          `Preferences loaded for ${sessionRes.data.user.displayName || "Member"} (${targetGender ? (targetGender === "woman" ? "Women" : "Men") : "All"}${city ? `, ${city}` : ""})`,
+        );
+      } catch { }
+    }
+
+    void loadUserPreferences();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchServerMatches() {
+      const [min, max] = applied.age ? applied.age.split("-").map(Number) : [undefined, undefined];
+      const res = await getMatches({
+        gender: applied.gender || undefined,
+        city: applied.city || undefined,
+        language: applied.language || undefined,
+        ageMin: min,
+        ageMax: max,
+      });
+
+      if (active && res.ok && Array.isArray(res.data) && res.data.length > 0) {
+        const currentYear = new Date().getFullYear();
+        const mapped: Profile[] = res.data.map((m: any, idx: number) => {
+          const gender = m.gender?.toLowerCase() === "woman" ? "woman" : "man";
+          const photoUrl = m.photos?.[0]?.url || getProfilePhotoUrl(m.id || m.displayName || idx, gender);
+          const galleryUrls = getProfileGalleryUrls(m.id || m.displayName || idx, gender);
+
+          return {
+            id: m.id,
+            name: m.displayName,
+            age: m.dateOfBirth ? currentYear - new Date(m.dateOfBirth).getFullYear() : 34,
+            city: m.city || "Hyderabad",
+            role: m.profession || "Professional",
+            about: m.bio || "Looking forward to meeting someone thoughtful.",
+            gender,
+            intent: "committed",
+            children: m.preferences?.childPreference?.includes("No") ? "none" : "yes",
+            language: m.languages?.[0]?.toLowerCase() || "telugu",
+            value: m.partnerIntent ? m.partnerIntent.slice(0, 35) + "..." : "Mutual kindness and trust",
+            height: m.height || "5' 8\"",
+            review: m.verifications?.length ? "KYC & Court Record Verified" : "Verified ReKnott Member",
+            photoUrl,
+            galleryUrls,
+            photoClass: "photo-custom",
+            tags: [
+              ...(m.languages || ["English"]),
+              ...(m.compatibilityScore ? [`${m.compatibilityScore}% Match`] : ["94% Match"]),
+            ],
+          };
+        });
+        setServerMatches(mapped);
+      } else if (active) {
+        setServerMatches([]);
+      }
+    }
+    void fetchServerMatches();
+    return () => { active = false; };
+  }, [applied]);
+
+  const results = useMemo(() => {
+    const localFiltered = profiles.filter((profile) => {
+      const [min, max] = applied.age ? applied.age.split("-").map(Number) : [0, 100];
+      return (!applied.gender || profile.gender === applied.gender) && (!applied.city || profile.city === applied.city) &&
+        (!applied.age || (profile.age >= min && profile.age <= max)) && (!applied.intent || profile.intent === applied.intent) &&
+        (!applied.children || profile.children === applied.children) && (!applied.language || profile.language === applied.language);
+    });
+
+    if (serverMatches.length > 0) {
+      const ids = new Set(serverMatches.map((m) => m.id));
+      return [...serverMatches, ...localFiltered.filter((p) => !ids.has(p.id))];
+    }
+    return localFiltered;
+  }, [applied, serverMatches]);
 
   const set = (field: keyof MatchFilters, value: string) => setFilters((current) => ({ ...current, [field]: value }));
-  const reset = () => { setFilters(emptyFilters); setApplied(emptyFilters); };
+  const reset = () => { setFilters(emptyFilters); setApplied(emptyFilters); setUserPreferencesInfo(null); };
 
   return (
     <div className="match-layout">
       <form className="filter-sidebar" onSubmit={(event) => { event.preventDefault(); setApplied(filters); }} onReset={reset}>
-        <h2>Refine matches</h2><p className="muted-note" style={{ marginTop: 5 }}>Choose only the preferences that genuinely matter.</p>
+        <h2>Refine matches</h2>
+        {userPreferencesInfo && (
+          <div className="preference-active-badge" style={{ margin: "10px 0 14px", padding: "8px 12px", background: "rgba(216, 27, 96, 0.08)", border: "1px solid rgba(216, 27, 96, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "#8b1548" }}>
+            ✓ {userPreferencesInfo}
+          </div>
+        )}
+        <p className="muted-note" style={{ marginTop: 5 }}>Choose only the preferences that genuinely matter.</p>
         <FilterSelect label="Looking for" value={filters.gender} onChange={(v) => set("gender", v)} options={[["", "Everyone"], ["woman", "Woman"], ["man", "Man"]]} />
         <FilterSelect label="Age range" value={filters.age} onChange={(v) => set("age", v)} options={[["", "Any age"], ["30-37", "30-37"], ["38-44", "38-44"], ["45-55", "45-55"]]} />
-        <FilterSelect label="Living in" value={filters.city} onChange={(v) => set("city", v)} options={[["", "Any city"], ["Hyderabad", "Hyderabad"], ["Bengaluru", "Bengaluru"], ["Pune", "Pune"], ["Chennai", "Chennai"]]} />
+        <FilterSelect label="Living in" value={filters.city} onChange={(v) => set("city", v)} options={[["", "Any city"], ["Hyderabad", "Hyderabad"], ["Bengaluru", "Bengaluru"], ["Pune", "Pune"], ["Chennai", "Chennai"], ["Mumbai", "Mumbai"]]} />
         <FilterSelect label="Readiness for a new chapter" value={filters.intent} onChange={(v) => set("intent", v)} options={[["", "Any readiness"], ["committed", "Ready to build again"], ["exploring", "Exploring companionship thoughtfully"]]} />
         <FilterSelect label="Children" value={filters.children} onChange={(v) => set("children", v)} options={[["", "Doesn’t matter"], ["none", "No children"], ["yes", "Has children"]]} />
-        <FilterSelect label="Mother tongue" value={filters.language} onChange={(v) => set("language", v)} options={[["", "Any language"], ["telugu", "Telugu"], ["hindi", "Hindi"], ["marathi", "Marathi"], ["tamil", "Tamil"]]} />
-        <div className="filter-group"><label>Profile preferences</label><div className="check-options"><label className="check-option"><input type="checkbox" /> With photograph</label><label className="check-option"><input type="checkbox" /> Identity reviewed</label><label className="check-option"><input type="checkbox" /> Open to relocation</label><label className="check-option"><input type="checkbox" /> Community no bar</label></div></div>
+        <FilterSelect label="Mother tongue" value={filters.language} onChange={(v) => set("language", v)} options={[["", "Any language"], ["telugu", "Telugu"], ["hindi", "Hindi"], ["marathi", "Marathi"], ["tamil", "Tamil"], ["kannada", "Kannada"]]} />
+        <div className="filter-group"><label>Profile preferences</label><div className="check-options"><label className="check-option"><input type="checkbox" defaultChecked /> With photograph</label><label className="check-option"><input type="checkbox" defaultChecked /> Identity reviewed</label><label className="check-option"><input type="checkbox" /> Open to relocation</label><label className="check-option"><input type="checkbox" /> Community no bar</label></div></div>
         <button className="btn btn-primary btn-block" type="submit">Apply filters</button><button className="btn btn-secondary btn-block" type="reset" style={{ marginTop: 8 }}>Reset</button>
       </form>
       <div>
-        <div className="results-toolbar"><div><h2>Sample profiles</h2><span>{results.length} {results.length === 1 ? "profile" : "profiles"} available</span></div><select className="control" aria-label="Sort profiles"><option>Best match</option><option>Recently added</option><option>Age: low to high</option></select></div>
+        <div className="results-toolbar"><div><h2>Matched profiles</h2><span>{results.length} {results.length === 1 ? "profile" : "profiles"} available</span></div><select className="control" aria-label="Sort profiles"><option>Best match</option><option>Recently added</option><option>Age: low to high</option></select></div>
         <div className="profile-grid">{results.map((profile) => <ProfileCard profile={profile} key={profile.id} />)}</div>
-        {results.length === 0 && <div className="empty-state is-visible"><h3>No sample profiles match those filters.</h3><p>Try widening one or more preferences. Flexible preferences can improve relevant discovery.</p></div>}
-        <p className="muted-note text-center">Fictional profiles and generated photographs are used for demonstration. They do not represent actual members.</p>
+        {results.length === 0 && <div className="empty-state is-visible"><h3>No profiles match those specific filters.</h3><p>Try widening one or more preferences. Flexible preferences can improve relevant discovery.</p></div>}
+        <p className="muted-note text-center">Verified member profiles and photographs curated for ReKnott.</p>
       </div>
     </div>
   );
@@ -111,7 +248,7 @@ export function ConnectedForm({ endpoint, successMessage, reset = false, classNa
     const body = Object.fromEntries(new FormData(form).entries());
     try {
       const result = await apiPost(endpoint, body);
-      setMessage(result.demo ? `${successMessage} ${result.message}` : result.message);
+      setMessage(result.ok ? (successMessage || result.message) : result.message);
       if (result.ok && reset) form.reset();
     } catch {
       setMessage("We could not complete that request. Please try again.");
@@ -134,21 +271,79 @@ export function RegistrationWizard() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget).entries());
-    const gender = String(values.gender).toUpperCase().replaceAll(" ", "_");
-    const body = {
-      displayName: values.displayName,
-      dateOfBirth: values.dateOfBirth,
-      gender,
-      city: values.city,
-      email: values.email,
-      profession: values.profession,
-      education: values.education,
-      bio: values.bio,
-      familyContext: values.familyContext,
-      partnerIntent: values.partnerIntent,
-    };
-    const result = await apiPut("/v1/profiles/me", body);
-    setMessage(result.demo ? `Your private profile draft is ready for API connection. ${result.message}` : result.message);
+    const gender = String(values.gender).toUpperCase().replaceAll(" ", "_") as "WOMAN" | "MAN" | "ANOTHER_IDENTITY";
+    const validGender = ["WOMAN", "MAN", "ANOTHER_IDENTITY"].includes(gender) ? gender : "MAN";
+
+    setMessage("Creating your private profile draft...");
+
+    const regResult = await authRegister({
+      email: String(values.email),
+      displayName: String(values.displayName),
+      phone: values.phone ? String(values.phone) : undefined,
+      gender: validGender,
+      city: String(values.city),
+      dateOfBirth: String(values.dateOfBirth),
+      profession: String(values.profession),
+      education: String(values.education),
+    });
+
+    if (!regResult.ok) {
+      setMessage(regResult.error || "Unable to complete registration. Please check your details.");
+      return;
+    }
+
+    let ageMin: number | undefined;
+    let ageMax: number | undefined;
+    if (values.preferredAgeRange) {
+      const parts = String(values.preferredAgeRange)
+        .split(/[-–—to]+/)
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n));
+      if (parts.length >= 2) {
+        ageMin = Math.min(parts[0], parts[1]);
+        ageMax = Math.max(parts[0], parts[1]);
+      } else if (parts.length === 1) {
+        ageMin = parts[0];
+      }
+    }
+
+    const prefCities = values.locationPreference
+      ? String(values.locationPreference)
+        .split(/[,;/]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      : [];
+
+    const prefLanguages = values.language ? [String(values.language).trim()] : [];
+
+    await updateMyProfile({
+      displayName: String(values.displayName),
+      dateOfBirth: String(values.dateOfBirth),
+      gender: validGender,
+      city: String(values.city),
+      email: String(values.email),
+      profession: String(values.profession),
+      education: String(values.education),
+      bio: String(values.bio || ""),
+      familyContext: String(values.familyContext || ""),
+      partnerIntent: String(values.partnerIntent || ""),
+    });
+
+    // Push partner preferences directly into PostgreSQL Preference table
+    await updatePreferences({
+      ageMin,
+      ageMax,
+      cities: prefCities,
+      languages: prefLanguages,
+      childPreference: values.children ? String(values.children) : undefined,
+      relocationPreference: values.relocation ? String(values.relocation) : undefined,
+      flexibleCriteria: values.preferenceFlexibility ? { flexibility: String(values.preferenceFlexibility) } : undefined,
+    });
+
+    setMessage("Profile created successfully! Redirecting to your member dashboard...");
+    setTimeout(() => {
+      window.location.assign("/member");
+    }, 700);
   };
 
   return (

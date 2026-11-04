@@ -8,7 +8,12 @@ export const metadata: Metadata = {
   description: "Manage your ReKnott profile, photographs, ranked matches and private conversations.",
 };
 
-export default async function MemberPage() {
-  await requireChatGPTUser("/member");
-  return <main className="member-page"><div className="container"><MemberDashboard /></div></main>;
+export default function MemberPage() {
+  return (
+    <main className="member-page">
+      <div className="container">
+        <MemberDashboard />
+      </div>
+    </main>
+  );
 }

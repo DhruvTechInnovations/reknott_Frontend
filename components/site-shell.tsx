@@ -13,6 +13,8 @@ const navItems = [
   ["/safety", "Safety"],
 ] as const;
 
+import { authLogout, authSession } from "@/lib/api";
+
 export function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,13 +25,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
     let active = true;
     async function checkSession() {
       try {
-        const response = await fetch("/api/demo/session", { cache: "no-store" });
-        if (response.ok) {
-          const data = await response.json().catch(() => ({ authenticated: false }));
-          if (active) setMemberAuthenticated(Boolean(data.authenticated));
-        } else {
-          if (active) setMemberAuthenticated(false);
-        }
+        const res = await authSession();
+        console.log('result form authsession', res)
+        if (active) setMemberAuthenticated(Boolean(res.ok && res.data?.profile));
       } catch {
         if (active) setMemberAuthenticated(false);
       } finally {
@@ -43,7 +41,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const closeMenu = () => setMenuOpen(false);
 
   async function signOut() {
-    await fetch("/api/demo/logout", { method: "POST" });
+    await authLogout();
     setMemberAuthenticated(false);
     closeMenu();
     window.location.assign("/");

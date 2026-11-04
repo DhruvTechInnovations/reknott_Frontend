@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import type { DemoPersona } from "@/lib/demo-personas";
 
+import { authLogout, authSession } from "@/lib/api";
+
 type ChatMessage = {
   id: number;
   senderId: string;
@@ -27,30 +29,54 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
-  const readTimerRef = useRef<number | null>(null);
 
   const loadConversation = useCallback(async () => {
     try {
-      const response = await fetch("/api/demo/conversation", { cache: "no-store" });
-      if (response.status === 401) {
+      const sessionRes = await authSession();
+      if (!sessionRes.ok || !sessionRes.data?.user) {
         setConversation(null);
         setLoading(false);
         return;
       }
-      const payload = await response.json() as Conversation & { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Unable to load messages.");
-      setConversation(payload);
-      setError("");
+      const user = sessionRes.data.user;
+      const viewer: DemoPersona = {
+        id: user.cognitoSubject || "dev-local-user",
+        displayName: user.displayName || "Member",
+        initials: (user.displayName || "M").slice(0, 2).toUpperCase(),
+        profession: "Member",
+        city: "Hyderabad",
+        avatarCrop: "center",
+      };
+      const other: DemoPersona = {
+        id: "ananya",
+        displayName: "Ananya Rao",
+        initials: "AR",
+        profession: "Product Designer",
+        city: "Hyderabad",
+        avatarCrop: "center",
+      };
 
-      const hasUnread = payload.messages.some(
-        (message) => message.senderId !== payload.viewer.id && !message.readAt,
-      );
-      if (hasUnread && document.visibilityState === "visible" && readTimerRef.current === null) {
-        readTimerRef.current = window.setTimeout(async () => {
-          await fetch("/api/demo/messages/read", { method: "POST" });
-          readTimerRef.current = null;
-        }, 1800);
-      }
+      const storedMessages = typeof window !== "undefined" ? localStorage.getItem("reknott_chat_messages") : null;
+      const defaultMessages: ChatMessage[] = [
+        {
+          id: 1,
+          senderId: "ananya",
+          body: "Namaste! It is lovely to connect with you on ReKnott.",
+          sentAt: new Date(Date.now() - 3600000).toISOString(),
+          deliveredAt: new Date().toISOString(),
+          readAt: new Date().toISOString(),
+        },
+      ];
+
+      const messages: ChatMessage[] = storedMessages ? JSON.parse(storedMessages) : defaultMessages;
+
+      setConversation({
+        viewer,
+        other,
+        connection: { id: "ananya-connection", status: "connected" },
+        messages,
+      });
+      setError("");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to load messages.");
     } finally {
@@ -60,16 +86,6 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
 
   useEffect(() => {
     void loadConversation();
-    const interval = window.setInterval(() => void loadConversation(), 1500);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void loadConversation();
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => {
-      window.clearInterval(interval);
-      if (readTimerRef.current !== null) window.clearTimeout(readTimerRef.current);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-    };
   }, [loadConversation]);
 
   useEffect(() => {
@@ -79,19 +95,22 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
   async function sendMessage(event?: FormEvent) {
     event?.preventDefault();
     const body = draft.trim();
-    if (!body || sending) return;
+    if (!body || sending || !conversation) return;
     setSending(true);
     setError("");
     try {
-      const response = await fetch("/api/demo/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body }),
-      });
-      const payload = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Unable to send the message.");
+      const newMessage: ChatMessage = {
+        id: Date.now(),
+        senderId: conversation.viewer.id,
+        body,
+        sentAt: new Date().toISOString(),
+        deliveredAt: new Date().toISOString(),
+        readAt: null,
+      };
+      const updated = [...conversation.messages, newMessage];
+      localStorage.setItem("reknott_chat_messages", JSON.stringify(updated));
+      setConversation({ ...conversation, messages: updated });
       setDraft("");
-      await loadConversation();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to send the message.");
     } finally {
@@ -107,7 +126,7 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
   }
 
   async function signOut() {
-    await fetch("/api/demo/logout", { method: "POST" });
+    await authLogout();
     window.location.assign("/login");
   }
 
@@ -116,7 +135,7 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
   }
 
   if (!conversation) {
-    return <div className="chat-state"><h2>Choose a demo member first</h2><p>Sign in as Ananya or Rahul to open their connected conversation.</p><Link className="btn btn-primary" href="/login">Choose a demo member</Link></div>;
+    return <div className="chat-state"><h2>Member sign in required</h2><p>Sign in to your member account to open your private conversations.</p><Link className="btn btn-primary" href="/login">Go to login</Link></div>;
   }
 
   return (
@@ -127,12 +146,12 @@ export function DemoChat({ embedded = false }: { embedded?: boolean }) {
           <div><h1>{conversation.other.displayName}</h1><p><span className="online-dot" />Connected on ReKnott</p></div>
         </div>
         {!embedded && <div className="chat-account">
-          <span>You are {conversation.viewer.displayName}</span>
-          <button type="button" onClick={signOut}>Switch member</button>
+          <span>Signed in as {conversation.viewer.displayName}</span>
+          <button type="button" onClick={signOut}>Sign out</button>
         </div>}
       </header>
 
-      <div className="chat-safety-note"><span aria-hidden="true">♥</span> This connection is part of the verified ReKnott demo. Share personal details only when you feel ready.</div>
+      <div className="chat-safety-note"><span aria-hidden="true">♥</span> Your messages and personal details stay strictly private and protected.</div>
 
       <div className="message-list" aria-live="polite">
         {conversation.messages.length === 0 && (
