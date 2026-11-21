@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | ReKnott Matrimony",
   },
   description:
-    "A focused, respectful matrimony community for people whose earlier marital journey has concluded and who are ready to welcome companionship again.",
+    "A verified remarriage community for divorced and widowed South Indian men and women who are ready to find love and companionship again.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 

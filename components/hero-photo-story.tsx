@@ -4,25 +4,25 @@ import { useEffect, useRef, useState } from "react";
 
 const moments = [
   {
-    src: "/assets/hero-south-indian-joy.png",
-    alt: "A young South Indian couple laughing together in a modern courtyard",
-    mood: "Spark",
-    title: "Laughter can find its way back.",
-    detail: "A joyful new connection that respects the life already lived",
+    src: "/assets/hope-first-conversation.jpg",
+    alt: "A young woman in a pastel organza saree looks down thoughtfully as a young man in a linen kurta speaks gently to her at their first meeting",
+    mood: "Beginning",
+    title: "It starts with one honest conversation.",
+    detail: "Someone who listens to your story, not just your biodata",
   },
   {
-    src: "/assets/hero-south-indian-elegant.png",
-    alt: "An elegant South Indian couple sharing a warm look at a celebration",
-    mood: "Warmth",
-    title: "Someone who understands the life you already carry.",
-    detail: "Shared experience, mutual respect and a future welcomed together",
+    src: "/assets/hope-park-walk.jpg",
+    alt: "A young South Indian woman and man on their first walk in a Hyderabad park, a little apart, as she offers a small tentative smile",
+    mood: "Trust",
+    title: "Take it slowly. Walk at your own pace.",
+    detail: "Trust that grows one gentle step at a time",
   },
   {
-    src: "/assets/hero-south-indian-date.png",
-    alt: "A South Indian couple enjoying a relaxed rooftop date at sunset",
-    mood: "Possibility",
-    title: "The years ahead can still be shared.",
-    detail: "Easy laughter, steady companionship and new moments to look forward to",
+    src: "/assets/hope-rooftop-cafe.jpg",
+    alt: "A young Tamil couple talking earnestly across a table at a rooftop café in Chennai in the evening",
+    mood: "Hope",
+    title: "The future can feel bright again.",
+    detail: "A partner who chooses you, story and all",
   },
 ];
 
