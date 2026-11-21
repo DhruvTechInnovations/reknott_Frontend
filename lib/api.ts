@@ -4,26 +4,27 @@ export type ApiResult<T = unknown> = {
   message: string;
 };
 
-// Auth token storage: cached in memory, persisted to a 7-day cookie and mirrored
-// to localStorage. Reads check memory, then the cookie, then localStorage.
+// Auth token storage: cached in memory and persisted to a 7-day cookie.
+// The token is never kept in localStorage.
 let inMemoryToken: string | null = null;
 const COOKIE_NAME = "reknott_session_token";
+
+// Older builds mirrored the token to localStorage; delete any copy left behind.
+function removeLegacyStoredToken(): void {
+  try {
+    localStorage.removeItem(COOKIE_NAME);
+  } catch {}
+}
 
 export function getAuthToken(): string | null {
   if (inMemoryToken) return inMemoryToken;
   if (typeof document !== "undefined") {
+    removeLegacyStoredToken();
     const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]*)`));
     if (match) {
       inMemoryToken = decodeURIComponent(match[1]);
       return inMemoryToken;
     }
-    try {
-      const stored = localStorage.getItem(COOKIE_NAME);
-      if (stored) {
-        inMemoryToken = stored;
-        return inMemoryToken;
-      }
-    } catch {}
   }
   return null;
 }
@@ -33,9 +34,7 @@ export function setAuthToken(token: string | null): void {
   if (typeof document !== "undefined") {
     if (token) {
       document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      try {
-        localStorage.setItem(COOKIE_NAME, token);
-      } catch {}
+      removeLegacyStoredToken();
     } else {
       clearAuthToken();
     }
