@@ -32,8 +32,8 @@ export function QuickSearch() {
       <div className="quick-search-title"><span>Start exploring compatible profiles</span><small>Your search stays private</small></div>
       <div className="quick-search-grid">
         <div className="search-field"><label htmlFor="home-gender">Looking for</label><select id="home-gender" name="gender"><option value="woman">Woman</option><option value="man">Man</option></select></div>
-        <div className="search-field"><label htmlFor="home-age-from">Age from</label><select id="home-age-from" name="ageFrom" defaultValue="30"><option>25</option><option>30</option><option>35</option><option>40</option></select></div>
-        <div className="search-field"><label htmlFor="home-age-to">Age to</label><select id="home-age-to" name="ageTo" defaultValue="45"><option>35</option><option>40</option><option>45</option><option>50</option><option>55</option></select></div>
+        <div className="search-field"><label htmlFor="home-age-from">Age from</label><select id="home-age-from" name="ageFrom" defaultValue="21"><option>21</option><option>25</option><option>30</option><option>35</option><option>40</option></select></div>
+        <div className="search-field"><label htmlFor="home-age-to">Age to</label><select id="home-age-to" name="ageTo" defaultValue="40"><option>30</option><option>35</option><option>40</option><option>45</option><option>50</option><option>55</option></select></div>
         <div className="search-field"><label htmlFor="home-city">Living in</label><select id="home-city" name="city"><option value="">Any city</option><option>Hyderabad</option><option>Bengaluru</option><option>Chennai</option><option>Pune</option></select></div>
         <button className="btn btn-primary" type="submit">View matches</button>
       </div>
@@ -103,7 +103,8 @@ export function MatchesExplorer() {
         const targetGender = profile?.gender === "MAN" ? "woman" : profile?.gender === "WOMAN" ? "man" : "";
         let ageRange = "";
         if (prefs?.ageMin && prefs?.ageMax) {
-          if (prefs.ageMax <= 37) ageRange = "30-37";
+          if (prefs.ageMax <= 29) ageRange = "21-29";
+          else if (prefs.ageMax <= 37) ageRange = "30-37";
           else if (prefs.ageMax <= 44) ageRange = "38-44";
           else ageRange = "45-55";
         }
@@ -212,11 +213,11 @@ export function MatchesExplorer() {
         )}
         <p className="muted-note" style={{ marginTop: 5 }}>Choose only the preferences that genuinely matter.</p>
         <FilterSelect label="Looking for" value={filters.gender} onChange={(v) => set("gender", v)} options={[["", "Everyone"], ["woman", "Woman"], ["man", "Man"]]} />
-        <FilterSelect label="Age range" value={filters.age} onChange={(v) => set("age", v)} options={[["", "Any age"], ["30-37", "30-37"], ["38-44", "38-44"], ["45-55", "45-55"]]} />
+        <FilterSelect label="Age range" value={filters.age} onChange={(v) => set("age", v)} options={[["", "Any age"], ["21-29", "21-29"], ["30-37", "30-37"], ["38-44", "38-44"], ["45-55", "45-55"]]} />
         <FilterSelect label="Living in" value={filters.city} onChange={(v) => set("city", v)} options={[["", "Any city"], ["Hyderabad", "Hyderabad"], ["Bengaluru", "Bengaluru"], ["Pune", "Pune"], ["Chennai", "Chennai"], ["Mumbai", "Mumbai"]]} />
         <FilterSelect label="Readiness for a new chapter" value={filters.intent} onChange={(v) => set("intent", v)} options={[["", "Any readiness"], ["committed", "Ready to build again"], ["exploring", "Exploring companionship thoughtfully"]]} />
         <FilterSelect label="Children" value={filters.children} onChange={(v) => set("children", v)} options={[["", "Doesn’t matter"], ["none", "No children"], ["yes", "Has children"]]} />
-        <FilterSelect label="Mother tongue" value={filters.language} onChange={(v) => set("language", v)} options={[["", "Any language"], ["telugu", "Telugu"], ["hindi", "Hindi"], ["marathi", "Marathi"], ["tamil", "Tamil"], ["kannada", "Kannada"]]} />
+        <FilterSelect label="Mother tongue" value={filters.language} onChange={(v) => set("language", v)} options={[["", "Any language"], ["telugu", "Telugu"], ["hindi", "Hindi"], ["marathi", "Marathi"], ["tamil", "Tamil"], ["kannada", "Kannada"], ["malayalam", "Malayalam"]]} />
         <div className="filter-group"><label>Profile preferences</label><div className="check-options"><label className="check-option"><input type="checkbox" defaultChecked /> With photograph</label><label className="check-option"><input type="checkbox" defaultChecked /> Identity reviewed</label><label className="check-option"><input type="checkbox" /> Open to relocation</label><label className="check-option"><input type="checkbox" /> Community no bar</label></div></div>
         <button className="btn btn-primary btn-block" type="submit">Apply filters</button><button className="btn btn-secondary btn-block" type="reset" style={{ marginTop: 8 }}>Reset</button>
       </form>
