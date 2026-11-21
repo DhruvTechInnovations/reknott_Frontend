@@ -4,7 +4,8 @@ export type ApiResult<T = unknown> = {
   message: string;
 };
 
-// In-memory token storage (NO localStorage used)
+// Auth token storage: cached in memory, persisted to a 7-day cookie and mirrored
+// to localStorage. Reads check memory, then the cookie, then localStorage.
 let inMemoryToken: string | null = null;
 const COOKIE_NAME = "reknott_session_token";
 
