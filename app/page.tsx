@@ -6,15 +6,15 @@ import { profiles } from "@/lib/profiles";
 export default function HomePage() {
   return <main>
     <section className="hero"><div className="container hero-grid">
-      <div className="hero-content"><span className="eyebrow">For lives ready to share the road again</span>
-        {/* <h1>Life has more to give. Find someone who understands what came before and  */}
-        <h1>A fresh chapter with
-          <span className="gradient-text"> someone who understands.</span>
+      <div className="hero-content"><span className="eyebrow">Remarriage, with hope and dignity</span>
+        <h1>Your story isn&apos;t over.
+          <span className="gradient-text"> Love can begin again.</span>
         </h1>
         <p className="hero-copy">
-          ReKnott is built only for people whose earlier chapter of marriage
-          has come to a close through life's circumstances. Here, every member
-          brings lived experience and the hope of meaningful companionship again.
+          ReKnott is a verified remarriage community for South Indian men and women
+          who are divorced or widowed and ready to share life again. Everyone here
+          has walked a similar road, so you never have to explain your past to be
+          welcomed into someone&apos;s future.
         </p>
         <QuickSearch />
         {/* <div className="hero-trust"><span><i>✓</i> KYC required</span><span><i>✓</i> Legal eligibility reviewed</span><span><i>✓</i> Consent-led contact</span></div> */}
@@ -40,13 +40,26 @@ export default function HomePage() {
     <section className="section">
       <div className="container">
         <div className="text-center">
-          <span className="eyebrow">Why ReKnott is different</span>
-          <h2 className="section-title">A matrimony community where every member is beginning again.</h2>
+          <span className="eyebrow">You are not alone</span>
+          <h2 className="section-title">Across South India, others are quietly hoping for the same thing you are.</h2>
           <p className="section-copy">
-            Connect with members who value your past, respect your present, and share your goals for the future.
+            Someone who has healed and is ready to trust again. Someone who still believes in a gentle, steady partnership. Two people who meet over coffee and realise neither of them has to pretend. ReKnott is where they meet.
           </p>
         </div>
-        <div className="browse-chips" style={{ justifyContent: "center" }}>{["Ready to build again", "With children", "Without children", "Working professionals", "Established lives", "NRI journeys", "Family-supported", "At your own pace"].map((item) => <Link className="browse-chip" href="/matches" key={item}>{item}</Link>)}</div></div></section>
+        <div className="hope-people">
+          <HopePerson img="/assets/hope-woman-message.jpg" alt="A young woman in a sky-blue kurta smiling softly at a message on her phone in a Bengaluru café" tag="Ready to trust again">
+            The quiet joy of a message from someone who already understands.
+          </HopePerson>
+          <HopePerson img="/assets/hope-man-balcony.jpg" alt="A young man in a linen kurta on an apartment balcony, smiling as he reads a message" tag="Ready to love again">
+            Men heal too. It is okay to hope for a calm, steady partnership.
+          </HopePerson>
+          <HopePerson img="/assets/hope-first-meeting.jpg" alt="At a first meeting in a Hyderabad cafeteria, a young woman shares her story with moist eyes as a young man listens with empathy" tag="A first meeting">
+            A coffee, an honest conversation, and no need to hide your story.
+          </HopePerson>
+        </div>
+        <div className="browse-chips" style={{ justifyContent: "center" }}>{["With children", "Without children", "Widowed", "Divorced", "Working professionals", "NRI journeys", "Family-supported", "At your own pace"].map((item) => <Link className="browse-chip" href="/matches" key={item}>{item}</Link>)}</div></div></section>
+
+    <section className="section section-blush"><div className="container two-column"><div className="photo-panel"><img src="/assets/hope-tender-moment.jpg" alt="On a garden bench, a young man gently offers his open hand as a young woman in a blush saree hesitates, deciding to trust again" loading="lazy" /><div className="photo-panel-copy" style={{ position: "static", borderRadius: 0 }}><strong>Happiness doesn&apos;t replace the past. It grows alongside it.</strong><span>Second marriages built on honesty are often the most deliberate and caring.</span></div></div><div><span className="eyebrow">Why it&apos;s worth hoping again</span><h2 className="section-title">You deserve a home that feels warm again.</h2><p className="section-copy">Remarriage is not starting over from nothing. You bring wisdom, patience and a clear sense of what truly matters. The right partner will value all of it, and build something new with you that is entirely your own.</p><ul className="check-list"><Check title="Companionship">someone to share morning coffee, festivals, hospital visits and quiet evenings with.</Check><Check title="Children">a partner who welcomes your children and is patient while trust grows.</Check><Check title="Family">parents at peace, knowing you are cared for and not alone.</Check><Check title="Yourself">the chance to laugh freely and feel chosen again.</Check></ul><div className="info-box"><strong>Your past needs no apology.</strong> Divorced or widowed, young or in your fifties, there is someone here hoping to meet a person just like you.</div></div></div></section>
 
     <section className="section section-blush"><div className="container"><div className="section-heading"><div><span className="eyebrow">Designed for lives shaped by experience</span><h2 className="section-title">Compatibility when beginning again needs more than biodata.</h2></div><p className="section-copy">ReKnott gives equal importance to the earlier journey, personal values, children, family responsibilities, emotional readiness and the future each person now wants.</p></div><div className="feature-grid">
       <Feature icon="01" title="Life-stage-aware profiles" link="/about" linkText="Why this matters →">Present your current life honestly: children, caregiving responsibilities, living arrangements and the role you want family to play.</Feature>
@@ -70,13 +83,12 @@ export default function HomePage() {
       <PlanPreview name="Elite" price="₹44,999" detail="Six months of senior RM support plus lawful, consent-based background check assistance." />
     </div><div className="pricing-preview-note"><span>Recommended launch pricing. GST as applicable.</span><Link className="btn btn-secondary" href="/pricing">Compare all plans</Link></div></div></section>
 
-    {/* <section className="section"><div className="container two-column"><div className="photo-panel"><img src="/assets/hero-south-indian-date.png" alt="A South Indian couple sharing a relaxed conversation on a rooftop" /><div className="photo-panel-copy"><strong>A new bond can grow without diminishing the chapter before it.</strong><span>Honesty, care and mutual respect make space for two experienced lives to meet.</span></div></div><div><span className="eyebrow">A steady light for the road ahead</span><h2 className="section-title">The right companion can bring warmth, courage and possibility back into everyday life.</h2><p className="section-copy">Someone who has also lived through change may understand the quiet need for support, laughter and presence. Together, two people can honour what shaped them and still create something deeply their own.</p><ul className="check-list"><Check title="Family and home">living arrangements, responsibilities, boundaries and the future you imagine.</Check><Check title="Money and responsibilities">financial independence, dependants, assets and expectations.</Check><Check title="Family involvement">how and when parents, siblings or children participate.</Check><Check title="Emotional readiness">pace, communication, memories and the relationship you want to build.</Check></ul><div className="info-box"><strong>Your past needs no apology.</strong> The right person will respect it while helping the life ahead feel shared again.</div></div></div></section> */}
 
-    <section className="section section-blush"><div className="container"><div className="section-heading"><div><span className="eyebrow">Safety and trust</span><h2 className="section-title">Required verification, explained clearly.</h2></div><p className="section-copy">A profile becomes active only after KYC and the applicable legal-status document have been reviewed. Each badge says what was checked, while sensitive documents remain private.</p></div><div className="feature-grid"><Feature icon="ID" title="KYC for every active member">Identity, age and photograph are checked against an accepted government-issued identity method.</Feature><Feature icon="✓" title="Legal eligibility review">Final court records or an official spouse death certificate are reviewed as applicable. Separation evidence alone does not confirm eligibility to remarry.</Feature><Feature icon="⚑" title="Ongoing reporting and support">Verification reduces impersonation and duplicate accounts, but members can still block, report and request human review.</Feature></div><div className="text-center" style={{ marginTop: 28 }}><Link className="btn btn-secondary" href="/safety">Read the complete verification guide</Link></div></div></section>
+    <section className="section section-blush"><div className="container"><div className="section-heading"><div><span className="eyebrow">Safety and trust</span><h2 className="section-title">Hope needs trust. So everyone here is verified.</h2></div><p className="section-copy">A profile becomes active only after KYC and the applicable legal-status document have been reviewed. Each badge says what was checked, while sensitive documents remain private.</p></div><div className="feature-grid"><Feature icon="ID" title="KYC for every active member">Identity, age and photograph are checked against an accepted government-issued identity method.</Feature><Feature icon="✓" title="Legal eligibility review">Final court records or an official spouse death certificate are reviewed as applicable. Separation evidence alone does not confirm eligibility to remarry.</Feature><Feature icon="⚑" title="Ongoing reporting and support">Verification reduces impersonation and duplicate accounts, but members can still block, report and request human review.</Feature></div><div className="text-center" style={{ marginTop: 28 }}><Link className="btn btn-secondary" href="/safety">Read the complete verification guide</Link></div></div></section>
 
-    <section className="section"><div className="container"><div className="text-center"><span className="eyebrow">New beginnings</span><h2 className="section-title">Stories should be shared only with consent.</h2><p className="section-copy">Until verified member stories are available, the website uses clearly marked illustrative examples rather than presenting invented testimonials as real.</p></div><div className="quote-grid" style={{ marginTop: 34 }}><Quote source="A family-aware beginning • Hyderabad">We first connected over the things that shaped our everyday lives: family, work and the kind of peaceful home we both wanted.</Quote><Quote source="A thoughtful connection • Chennai">I hoped to meet someone who could understand my journey and still imagine a joyful future with me.</Quote><Quote source="A values-first connection • Bengaluru">We spoke about important subjects early. The honesty gave us more confidence than any perfect profile could.</Quote></div></div></section>
+    <section className="section"><div className="container"><div className="text-center"><span className="eyebrow">New beginnings</span><h2 className="section-title">Hope sounds like this.</h2><p className="section-copy">The kind of moments our members are looking for. Real stories will be shared here only with both partners&apos; consent; until then, these examples are clearly marked as illustrative.</p></div><div className="quote-grid" style={{ marginTop: 34 }}><Quote source="A family-aware beginning • Hyderabad">We first connected over the things that shaped our everyday lives: family, work and the kind of peaceful home we both wanted.</Quote><Quote source="A thoughtful connection • Chennai">I hoped to meet someone who could understand my journey and still imagine a joyful future with me.</Quote><Quote source="A values-first connection • Bengaluru">We spoke about important subjects early. The honesty gave us more confidence than any perfect profile could.</Quote></div></div></section>
 
-    <CallToAction title="Your earlier chapter matters. So does everything still ahead." text="Create a private profile and meet people who understand what it means to welcome companionship again." />
+    <CallToAction title="Someone here is hoping to meet a person just like you." text="Create a free, private profile today. Take your time, and say yes only when it feels right." />
   </main>;
 }
 
@@ -84,6 +96,7 @@ function TrustProof({ icon, title, text }: { icon: string; title: string; text: 
 function Motivation({ tag, featured = false, children }: { tag: string; featured?: boolean; children: React.ReactNode }) { return <article className={`motivation-card${featured ? " featured" : ""}`}><span>{tag}</span><blockquote>{children}</blockquote></article>; }
 function PlanPreview({ name, price, detail, recommended = false }: { name: string; price: string; detail: string; recommended?: boolean }) { return <article className={`plan-preview${recommended ? " recommended" : ""}`}>{recommended && <span className="plan-preview-badge">Recommended</span>}<h3>{name}</h3><strong>{price}</strong><p>{detail}</p></article>; }
 function Feature({ icon, title, link, linkText, children }: { icon: string; title: string; link?: string; linkText?: string; children: React.ReactNode }) { return <article className="feature-card">{icon && <div className="icon-box">{icon}</div>}<h3>{title}</h3><p>{children}</p>{link && <Link className="text-link" href={link}>{linkText}</Link>}</article>; }
+function HopePerson({ img, alt, tag, children }: { img: string; alt: string; tag: string; children: React.ReactNode }) { return <article className="hope-person"><img src={img} alt={alt} loading="lazy" /><div><span>{tag}</span><p>{children}</p></div></article>; }
 function Check({ title, children }: { title: string; children: React.ReactNode }) { return <li><span className="check">✓</span><span><strong>{title}:</strong> {children}</span></li>; }
 function Quote({ source, children }: { source: string; children: React.ReactNode }) { return <article className="quote-card"><span className="sample-label">Illustrative story</span><div className="quote-mark">“</div><blockquote>{children}</blockquote><div className="quote-source">{source}</div></article>; }
 function CallToAction({ title, text }: { title: string; text: string }) { return <section className="section-sm"><div className="container"><div className="cta-panel"><div className="cta-content"><div><h2>{title}</h2><p>{text}</p></div><div className="cta-actions"><Link className="btn btn-light" href="/register">Create my profile</Link><Link className="btn btn-ghost-light" href="/contact">Talk to support</Link></div></div></div></div></section>; }
